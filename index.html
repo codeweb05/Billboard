@@ -84,16 +84,16 @@
             let imgInterval = setInterval(() => {
                 if(templateImg.complete && posterImg.complete) {
                     domtoimage.toPng(tempContainer).then(function (dataUrl) {
+                        clearInterval(imgInterval);
                         paintPoster.removeChild(tempContainer);
                         displayImg.src = dataUrl;
                         document.getElementById('dwn-link').href = dataUrl;
                         overlay.style.display = 'none';
                         enableScroll();
                         document.body.className = '';
-                        clearInterval(imgInterval);
                     });
                 }
-            },1);
+            },300);
         }
 
         function uploadFile(event) {

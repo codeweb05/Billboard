@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+     <link rel="stylesheet" href="bootstrap.min.css"/>
+    <link rel="stylesheet" href="main.css" />
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"> -->
+    <script src="dom-to-image.js"></script>
+</head>
+<body>
+    <div id="paint-poster">
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="left-section col-lg-7 col-md-7 col-sm-7 col-xs-12">
+                <div class="template-wrapper">
+                    <img id="display-img" src="assets/templates/template1.jpg" alt="">
+                </div>
+            </div>
+            <div class="right-section col-lg-5 col-md-5 col-sm-5 col-xs-12">
+                <div class="right-section-inner">
+                    <div class="create-heading">Create Billboard Mockups</div>
+                    <div class="choose-template-heading">Choose template</div>
+                    <div class="template-selector hide-scroll">
+                        <div class="template-selector-inner">
+                            <div class="template-selector-img-wrapper active-template" id="template1">
+                                <img src="assets/templates/template1_thumbnail.jpg" onclick="generateImage('template1.jpg')" alt="">
+                            </div>
+                            <div class="template-selector-img-wrapper" id="template2">
+                                <img src="assets/templates/template2_thumbnail.jpg" onclick="generateImage('template2.jpg')" alt="">
+                            </div>
+                            <div class="template-selector-img-wrapper" id="template3">
+                                <img src="assets/templates/template3_thumbnail.jpg" onclick="generateImage('template3.png')" alt="">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="upload-heading">Upload your poster (.png or .jpg)</div>
+                    <div class="upload-img-wrapper">
+                        <input type="file" name="" id="" onchange="uploadFile(event)" accept='image/*'>
+                    </div>
+                    <hr>
+                    <center><a href="" id="dwn-link" download="Billboard"><button class="btn dwn-btn">DOWNLOAD BILLBOARD</button></a></center>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="overlay">
+        <div class="loader"></div>
+    </div>
+    <script>
+        let posterImageSrc;
+        let isPosterSelected = false;
+        let selectedTemplate = 'template1.jpg';
+        function generateImage(templateName) {
+            if(templateName === selectedTemplate) return;
+            let displayImg = document.querySelector("#display-img");
+            if (!isPosterSelected) displayImg.src = `/assets/templates/${templateName}`;
+            selectedTemplate = templateName ? templateName : selectedTemplate;
+            let activeTemplate = document.querySelector('.active-template');
+            activeTemplate.classList.remove('active-template');
+            activeTemplate = document.getElementById(selectedTemplate.split('.')[0]);
+            activeTemplate.classList.add('active-template');
+            if(!posterImageSrc) return;
+            let paintPoster = document.getElementById('paint-poster');
+            let overlay = document.getElementById('overlay');
+            let tempContainer = document.createElement("DIV");
+            tempContainer.setAttribute("id", "temp-container");
+            let templateImg = document.createElement("IMG");
+            templateImg.src = `/assets/templates/${selectedTemplate}`;
+            tempContainer.appendChild(templateImg);
+            let box = document.createElement("DIV");
+            box.className = `box ${selectedTemplate.split('.')[0]}`;
+            let posterImg = document.createElement("IMG");
+            posterImg.src = posterImageSrc;
+            box.appendChild(posterImg);
+            tempContainer.appendChild(box);
+            paintPoster.appendChild(tempContainer);
+            overlay.style.display = 'flex';
+            document.body.className = 'hide-scroll';
+            disableScroll();
+                    
+            let imgInterval = setInterval(() => {
+                if(templateImg.complete && posterImg.complete) {
+                    domtoimage.toPng(tempContainer).then(function (dataUrl) {
+                        paintPoster.removeChild(tempContainer);
+                        displayImg.src = dataUrl;
+                        document.getElementById('dwn-link').href = dataUrl;
+                        overlay.style.display = 'none';
+                        enableScroll();
+                        document.body.className = '';
+                        clearInterval(imgInterval);
+                    });
+                }
+            },1);
+        }
+
+        function uploadFile(event) {
+            let files = event.target && event.target.files;
+            console.log(files);
+            if (files.length === 0) return;
+
+            let mimeType = files[0].type;
+            if (mimeType.match(/image\/*/) == null) {
+                return;
+            }
+
+            var reader = new FileReader();
+            reader.readAsDataURL(files[0]);
+            reader.onload = (_event) => {
+                posterImageSrc = reader.result;
+                isPosterSelected = true;
+                generateImage();
+            };
+        }
+
+        // left: 37, up: 38, right: 39, down: 40,
+        // spacebar: 32, pageup: 33, pagedown: 34, end: 35, home: 36
+        var keys = {37: 1, 38: 1, 39: 1, 40: 1};
+
+        function preventDefault(e) {
+            e.preventDefault();
+        }
+
+        function preventDefaultForScrollKeys(e) {
+            if (keys[e.keyCode]) {
+                preventDefault(e);
+                return false;
+            }
+        }
+
+        // modern Chrome requires { passive: false } when adding event
+        var supportsPassive = false;
+        try {
+            window.addEventListener("test", null, Object.defineProperty({}, 'passive', {
+                get: function () { supportsPassive = true; } 
+            }));
+        } catch(e) {}
+
+        var wheelOpt = supportsPassive ? { passive: false } : false;
+        var wheelEvent = 'onwheel' in document.createElement('div') ? 'wheel' : 'mousewheel';
+
+        // call this to Disable
+        function disableScroll() {
+            window.addEventListener('DOMMouseScroll', preventDefault, false); // older FF
+            window.addEventListener(wheelEvent, preventDefault, wheelOpt); // modern desktop
+            window.addEventListener('touchmove', preventDefault, wheelOpt); // mobile
+            window.addEventListener('keydown', preventDefaultForScrollKeys, false);
+        }
+
+        // call this to Enable
+        function enableScroll() {
+            window.removeEventListener('DOMMouseScroll', preventDefault, false);
+            window.removeEventListener(wheelEvent, preventDefault, wheelOpt); 
+            window.removeEventListener('touchmove', preventDefault, wheelOpt);
+            window.removeEventListener('keydown', preventDefaultForScrollKeys, false);
+        }
+                    
+    </script>
+</body>
+</html>

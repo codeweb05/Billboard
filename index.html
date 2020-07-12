@@ -53,6 +53,7 @@
         let posterImageSrc;
         let isPosterSelected = false;
         let selectedTemplate = 'template1.jpg';
+        let isProcessing = false;
         function generateImage(templateName) {
             if(templateName === selectedTemplate) return;
             let displayImg = document.querySelector("#display-img");
@@ -63,6 +64,8 @@
             activeTemplate = document.getElementById(selectedTemplate.split('.')[0]);
             activeTemplate.classList.add('active-template');
             if(!posterImageSrc) return;
+            // let templateWrapper = document.querySelector(".template-wrapper");
+            // displayImg.classList.add('fade');
             let paintPoster = document.getElementById('paint-poster');
             let overlay = document.getElementById('overlay');
             let tempContainer = document.createElement("DIV");
@@ -80,11 +83,14 @@
             overlay.style.display = 'flex';
             document.body.className = 'hide-scroll';
             disableScroll();
-                    
+            
             let imgInterval = setInterval(() => {
-                if(templateImg.complete && posterImg.complete) {
+                if(templateImg.complete && posterImg.complete && !isProcessing) {
+                    isProcessing = true;
+                    clearInterval(imgInterval);
                     domtoimage.toPng(tempContainer).then(function (dataUrl) {
-                        clearInterval(imgInterval);
+                        isProcessing = false;
+                        // displayImg.classList.remove('fade');
                         paintPoster.removeChild(tempContainer);
                         displayImg.src = dataUrl;
                         document.getElementById('dwn-link').href = dataUrl;
